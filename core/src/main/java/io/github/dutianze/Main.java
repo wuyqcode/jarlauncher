@@ -32,6 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import games.spooky.gdx.nativefilechooser.NativeFileChooser;
 import games.spooky.gdx.nativefilechooser.NativeFileChooserCallback;
 import games.spooky.gdx.nativefilechooser.NativeFileChooserConfiguration;
+import io.github.dutianze.jvm.JavaRuntime;
 
 public class Main extends ApplicationAdapter {
 
@@ -326,7 +327,7 @@ public class Main extends ApplicationAdapter {
                 return;
             }
 
-            ProcessBuilder pb = new ProcessBuilder("java", "-jar", JAR_PATH, "--server.port=" + port);
+            ProcessBuilder pb = new ProcessBuilder(JavaRuntime.getDefault().getBinary().toString(), "-jar", JAR_PATH, "--server.port=" + port);
             pb.redirectErrorStream(true);
             File logFile = new File(LOG_PATH);
             pb.redirectOutput(logFile);
