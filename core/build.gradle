@@ -6,4 +6,5 @@ dependencies {
   api "games.spooky.gdx:gdx-nativefilechooser:$gdxNativefilechooserVersion"
   implementation 'com.zaxxer:nuprocess:3.0.0'
   implementation 'jakarta.annotation:jakarta.annotation-api:3.0.0'
+  api "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
 }
