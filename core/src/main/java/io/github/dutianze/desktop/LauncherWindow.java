@@ -33,7 +33,6 @@ public class LauncherWindow extends Window {
     private float originalY = (Gdx.graphics.getHeight() - height) / 2;
 
     private static final String LOG_PATH = "server.log";
-    private static String JAR_PATH = "";
     private Process serverProcess;
     private Program program;
 
@@ -173,7 +172,6 @@ public class LauncherWindow extends Window {
                     Path sourcePath = Paths.get(file.path());
                     Path targetPath = Paths.get(fileName);
                     Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
-                    JAR_PATH = fileName;
                     Gdx.app.postRunnable(() -> {
                         statusLabel.setText("Status: JAR file uploaded");
                         appendToLog(
@@ -212,7 +210,7 @@ public class LauncherWindow extends Window {
         }
 
         try {
-            Path jarPath = Paths.get(JAR_PATH);
+            Path jarPath = Paths.get(program.getJarItemDto().jarPath());
             if (!Files.exists(jarPath)) {
                 statusLabel.setText("Status: JAR file not found");
                 return;
@@ -225,7 +223,7 @@ public class LauncherWindow extends Window {
             }
 
             ProcessBuilder pb = new ProcessBuilder(JavaRuntime.getDefault().getBinary().toString(),
-                                                   "-jar", JAR_PATH, "--server.port=" + port);
+                                                   "-jar", jarPath.toString(), "--server.port=" + port);
             pb.redirectErrorStream(true);
             File logFile = new File(LOG_PATH);
             pb.redirectOutput(logFile);
@@ -371,11 +369,6 @@ public class LauncherWindow extends Window {
             Gdx.app.postRunnable(
                 () -> statusLabel.setText("Status: Failed to write to log - " + e.getMessage()));
         }
-    }
-
-    private String getJarPath() {
-        Path path = Paths.get(JAR_PATH).toAbsolutePath();
-        return Files.exists(path) ? path.getFileName().toString() : "No JAR uploaded";
     }
 
 
