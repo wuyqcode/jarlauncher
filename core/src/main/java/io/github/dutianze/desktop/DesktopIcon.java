@@ -27,7 +27,7 @@ public class DesktopIcon extends Table {
         iconImage.setScaling(Scaling.contain);
         iconImage.setTouchable(Touchable.enabled);
         IconTitle nameLabel = new IconTitle(item.getIconName(), skin, "default");
-        this.add(iconImage).size(this.getPrefWidth() * 2 / 3).row();
+        this.add(iconImage).size(this.getPrefWidth() * 3 / 5).row();
         this.add(nameLabel).width(this.getPrefWidth()).center();
         this.addListener(new ClickListener() {
             long lastClickTime = 0;

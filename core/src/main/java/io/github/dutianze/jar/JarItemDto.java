@@ -8,7 +8,7 @@ public record JarItemDto(String name, String jarPath, Texture icon) {
         if (name == null) {
             return "";
         }
-        int idx = name.lastIndexOf('-');
+        int idx = name.indexOf('-');
         return idx != -1 ? name.substring(0, idx) : name;
     }
 

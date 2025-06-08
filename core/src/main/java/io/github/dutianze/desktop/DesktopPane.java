@@ -13,13 +13,12 @@ public class DesktopPane extends Table {
         void onDoubleClick(JarItemDto item);
     }
 
-    public DesktopPane(Skin skin, List<JarItemDto> jarItems, IconClickListener listener,
-                       int rowCount) {
+    public DesktopPane(Skin skin, List<Program> programList, int rowCount) {
         super(skin);
         this.setBackground("wallpaper");
         this.top().left().padLeft(10);
 
-        int total = jarItems.size();
+        int total = programList.size();
         int columnCount = (int) Math.ceil((double) total / rowCount);
 
         List<Table> columns = new ArrayList<>();
@@ -32,11 +31,9 @@ public class DesktopPane extends Table {
         this.row();
 
         for (int i = 0; i < total; i++) {
-            JarItemDto item = jarItems.get(i);
+            Program item = programList.get(i);
             int colIndex = i / rowCount;
-
-            DesktopIcon icon = new DesktopIcon(skin, item, listener);
-            columns.get(colIndex).add(icon).row();
+            columns.get(colIndex).add(item.getDesktopIcon()).row();
         }
     }
 }
