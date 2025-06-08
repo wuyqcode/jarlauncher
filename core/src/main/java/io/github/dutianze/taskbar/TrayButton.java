@@ -35,16 +35,16 @@ public class TrayButton extends TextButton {
         style.fontColor = Color.BLACK;
 
         style.up = createXp3dButtonDrawable(
+            new Color(0.9f, 0.95f, 1.0f, 1f),
+            new Color(0.75f, 0.85f, 1.0f, 1f),
+            Color.WHITE
+        );
+
+        style.checked = createXp3dButtonDrawable(
             new Color(0.9f, 0.95f, 1.0f, .6f),
             new Color(0.75f, 0.85f, 1.0f, .6f),
             new Color(0f, 0f, 0f, .5f)
         );
-
-        style.checked = createXp3dButtonDrawable(
-                new Color(0.9f, 0.95f, 1.0f, 1f),
-                new Color(0.75f, 0.85f, 1.0f, 1f),
-                Color.WHITE
-            );
         return style;
     }
 

@@ -30,6 +30,7 @@ public class Main extends ApplicationAdapter {
     private List<Program> programList;
     private List<Program> openedProgramList = new ArrayList<>();
     private Table taskbarContent;
+    private Table root;
 
     // 构造函数，接受 NativeFileChooser
     public Main(NativeFileChooser fileChooser) {
@@ -44,7 +45,7 @@ public class Main extends ApplicationAdapter {
         List<JarItemDto> jarItems = scanner.scan();
         stage = new Stage(new ScreenViewport());
         Gdx.input.setInputProcessor(stage);
-        Table root = new Table(skin);
+        this.root = new Table(skin);
         root.setFillParent(true);
         stage.addActor(root);
 
@@ -126,5 +127,13 @@ public class Main extends ApplicationAdapter {
 
     public void setOpenedProgramList(List<Program> openedProgramList) {
         this.openedProgramList = openedProgramList;
+    }
+
+    public Table getRoot() {
+        return root;
+    }
+
+    public void setRoot(Table root) {
+        this.root = root;
     }
 }

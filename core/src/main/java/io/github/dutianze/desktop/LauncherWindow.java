@@ -27,7 +27,6 @@ public class LauncherWindow extends Window {
     private final NativeFileChooser fileChooser;
     private final TextField portField;
     private final Label statusLabel;
-    private boolean isMinimized = false;
     private final float width = 400;
     private final float height = 350;
     private float originalX = (Gdx.graphics.getWidth() - width) / 2;
@@ -69,7 +68,7 @@ public class LauncherWindow extends Window {
         minimizeButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                toggleMinimize();
+                toggleMinimize(false);
             }
         });
 
@@ -142,21 +141,22 @@ public class LauncherWindow extends Window {
         this.setSize(400, 350);
     }
 
-    public void toggleMinimize() {
-        this.toFront();
-        if (!isMinimized) {
-            originalX = this.getX();
-            originalY = this.getY();
-            this.setVisible(false);
-            isMinimized = true;
-        } else {
-            this.setVisible(true);
+
+    public void toggleMinimize(boolean focus) {
+        originalX = this.getX();
+        originalY = this.getY();
+        if (focus) {
+            this.toFront();
             this.setWidth(width);
             this.setHeight(height);
             this.setPosition(originalX, originalY);
-            isMinimized = false;
+            this.setVisible(true);
+            return;
         }
+
+        this.setVisible(false);
     }
+
 
     private void uploadJar() {
         statusLabel.setText("Status: Opening file chooser...");
