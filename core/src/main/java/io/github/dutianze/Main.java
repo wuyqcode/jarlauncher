@@ -1,5 +1,6 @@
 package io.github.dutianze;
 
+
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
@@ -16,6 +17,11 @@ import io.github.dutianze.jar.JarItemDto;
 import io.github.dutianze.jar.JarScanner;
 import io.github.dutianze.menu.StartMenu;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -23,14 +29,18 @@ import java.util.List;
 
 public class Main extends ApplicationAdapter {
 
+    private static final String LOG_PATH = "server.log";
     private Stage stage;
     private Skin skin;
     private Label timeLabel;
     private final NativeFileChooser fileChooser;
-    private List<Program> programList;
+    private List<Program> programList = new ArrayList<>();
     private List<Program> openedProgramList = new ArrayList<>();
     private Table taskbarContent;
     private Table root;
+    private FileHandle jarPath;
+    private JarScanner scanner;
+    private DesktopPane desktop;
 
     // 构造函数，接受 NativeFileChooser
     public Main(NativeFileChooser fileChooser) {
@@ -40,21 +50,18 @@ public class Main extends ApplicationAdapter {
     @Override
     public void create() {
         skin = new Skin(Gdx.files.internal("expee-ui.json"));
-        FileHandle jarDir = Gdx.files.internal("jar");
-        JarScanner scanner = new JarScanner(jarDir);
-        List<JarItemDto> jarItems = scanner.scan();
+        this.jarPath = Gdx.files.local("jar");
+        this.scanner = new JarScanner(jarPath);
         stage = new Stage(new ScreenViewport());
         Gdx.input.setInputProcessor(stage);
         this.root = new Table(skin);
         root.setFillParent(true);
         stage.addActor(root);
-
         root.top();
 
         // desktop
-        this.programList = jarItems
-            .stream().map(e -> new Program(this, skin, stage, fileChooser, e)).toList();
-        DesktopPane desktop = new DesktopPane(skin, programList, 5);
+        this.desktop = new DesktopPane(skin);
+        scanJar();
         root.add(desktop).expand().fill().row();
 
         // taskbar
@@ -136,4 +143,43 @@ public class Main extends ApplicationAdapter {
     public void setRoot(Table root) {
         this.root = root;
     }
+
+    public void scanJar() {
+        List<JarItemDto> jarItems = scanner.scan();
+        this.programList = jarItems
+            .stream().map(e -> new Program(this, skin, stage, fileChooser, e)).toList();
+        this.desktop.setup(this.programList, 5);
+        this.desktop.invalidateHierarchy();
+    }
+
+    public void uploadJar(Path uploadJar) {
+        FileHandle source = Gdx.files.absolute(uploadJar.toAbsolutePath().toString());
+
+        String folder = getIconName(uploadJar.toFile().getName());
+        Path targetFile = Paths.get(folder).resolve(uploadJar.getFileName().toString());
+        FileHandle target = jarPath.child(targetFile.toString());
+        source.copyTo(target);
+        scanJar();
+        Gdx.app.postRunnable(() -> appendToLog(
+            "JAR file uploaded: " + uploadJar.getFileName() + " at " + getCurrentTime()));
+    }
+
+    public String getIconName(String jarName) {
+        if (jarName == null) {
+            return "";
+        }
+        int idx = jarName.indexOf('-');
+        return idx != -1 ? jarName.substring(0, idx) : jarName;
+    }
+
+
+    private void appendToLog(String message) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(LOG_PATH, true))) {
+            writer.write("[" + getCurrentTime() + "] " + message);
+            writer.newLine();
+        } catch (IOException e) {
+            Gdx.app.error("Main", "appendToLog", e);
+        }
+    }
+
 }

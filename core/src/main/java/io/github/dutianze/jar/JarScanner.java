@@ -6,7 +6,9 @@ import io.github.dutianze.desktop.IconLoader;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.jar.JarFile;
 
 public class JarScanner {
@@ -27,10 +29,16 @@ public class JarScanner {
         }
 
         for (FileHandle file : directory.list()) {
-            if (file.extension().equalsIgnoreCase("jar")) {
-                JarItemDto item = extractJarInfo(file);
-                if (item != null) {
-                    items.add(item);
+            if (file.isDirectory()) {
+                Optional<FileHandle> jarOptional = Arrays.stream(file.list())
+                                                         .filter(f -> f.extension().equalsIgnoreCase("jar"))
+                                                         .findFirst();
+                if (jarOptional.isPresent()) {
+                    JarItemDto item = extractJarInfo(jarOptional.get()
+                    );
+                    if (item != null) {
+                        items.add(item);
+                    }
                 }
             }
         }

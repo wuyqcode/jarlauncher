@@ -1,9 +1,12 @@
 package io.github.dutianze.lwjgl3;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
+import com.badlogic.gdx.backends.lwjgl3.Lwjgl3WindowAdapter;
 import games.spooky.gdx.nativefilechooser.desktop.DesktopFileChooser;
 import io.github.dutianze.Main;
+import java.nio.file.Paths;
 
 /** Launches the desktop (LWJGL3) application. */
 public class Lwjgl3Launcher {
@@ -13,7 +16,19 @@ public class Lwjgl3Launcher {
     }
 
     private static Lwjgl3Application createApplication() {
-        return new Lwjgl3Application(new Main(new DesktopFileChooser()), getDefaultConfiguration());
+        Main main = new Main(new DesktopFileChooser());
+        Lwjgl3ApplicationConfiguration configuration = getDefaultConfiguration();
+
+        configuration.setWindowListener(new Lwjgl3WindowAdapter() {
+            @Override
+            public void filesDropped (String[] files) {
+                for (String file : files) {
+                    main.uploadJar(Paths.get(file));
+                }
+            }
+
+        });
+        return new Lwjgl3Application(main, configuration);
     }
 
     private static Lwjgl3ApplicationConfiguration getDefaultConfiguration() {

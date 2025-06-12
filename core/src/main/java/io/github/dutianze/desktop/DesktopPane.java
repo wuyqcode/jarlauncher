@@ -13,8 +13,12 @@ public class DesktopPane extends Table {
         void onDoubleClick(JarItemDto item);
     }
 
-    public DesktopPane(Skin skin, List<Program> programList, int rowCount) {
+    public DesktopPane(Skin skin) {
         super(skin);
+    }
+
+    public void setup(List<Program> programList, int rowCount){
+        this.clear();
         this.setBackground("wallpaper");
         this.top().left().padLeft(10);
 

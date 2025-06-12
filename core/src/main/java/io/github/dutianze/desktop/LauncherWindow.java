@@ -224,6 +224,7 @@ public class LauncherWindow extends Window {
 
             ProcessBuilder pb = new ProcessBuilder(JavaRuntime.getDefault().getBinary().toString(),
                                                    "-jar", jarPath.toString(), "--server.port=" + port);
+            pb.directory(jarPath.getParent().toFile());
             pb.redirectErrorStream(true);
             File logFile = new File(LOG_PATH);
             pb.redirectOutput(logFile);
