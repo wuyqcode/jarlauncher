@@ -17,7 +17,7 @@ public class DesktopPane extends Table {
         super(skin);
     }
 
-    public void setup(List<Program> programList, int rowCount){
+    public void setup(List<Program> programList, int rowCount) {
         this.clear();
         this.setBackground("wallpaper");
         this.top().left().padLeft(10);

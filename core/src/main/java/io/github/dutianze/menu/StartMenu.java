@@ -69,7 +69,6 @@ public class StartMenu extends Table {
                 return false;
             }
         });
-        this.setDebug(true);
         this.setClip(true);
     }
 

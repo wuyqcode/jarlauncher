@@ -7,7 +7,10 @@ import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.*;
+import com.badlogic.gdx.scenes.scene2d.ui.Button;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import games.spooky.gdx.nativefilechooser.NativeFileChooser;
@@ -62,7 +65,7 @@ public class Main extends ApplicationAdapter {
         // desktop
         this.desktop = new DesktopPane(skin);
         scanJar();
-        root.add(desktop).expand().fill().row();
+        root.add(desktop).row();
 
         // taskbar
         Table taskbar = new Table(skin);
@@ -91,7 +94,7 @@ public class Main extends ApplicationAdapter {
         timeLabel = new Label(getCurrentTime(), skin, "white");
         table.add(timeLabel).padLeft(5.0f);
         taskbar.add(table);
-        root.add(taskbar).fillX().height(32).bottom();
+        root.add(taskbar).grow().height(32).bottom();
     }
 
 

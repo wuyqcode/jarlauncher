@@ -1,14 +1,11 @@
 package io.github.dutianze.desktop;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.Scaling;
 import games.spooky.gdx.nativefilechooser.NativeFileChooser;
-import games.spooky.gdx.nativefilechooser.NativeFileChooserCallback;
-import games.spooky.gdx.nativefilechooser.NativeFileChooserConfiguration;
 import io.github.dutianze.jar.JarItemDto;
 import io.github.dutianze.jvm.JavaRuntime;
 
@@ -16,7 +13,6 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -74,31 +70,19 @@ public class LauncherWindow extends Window {
         titleTable.add(minimizeButton).expandX().right();
         titleTable.add(closeButton).padLeft(5.0f).padRight(5.0f);
 
-        TextButton uploadButton = new TextButton("Upload JAR", skin);
-        uploadButton.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                uploadJar();
-            }
-        });
-        table.add(new Label("JAR File:", skin)).left();
-        table.add(uploadButton).growX().row();
-
         table.add(new Label("Port:", skin)).left();
         portField = new TextField("8080", skin);
         table.add(portField).growX().row();
 
         // Start/Stop buttons
         Table buttonTable = new Table();
-        TextButton startButtonServer = new TextButton("Start Server", skin);
-        startButtonServer.addListener(new ChangeListener() {
+        TextButton startButton = new TextButton("Start Server", skin);
+        startButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 startServer();
             }
         });
-        buttonTable.add(startButtonServer).width(100).padRight(10);
-
         TextButton stopButton = new TextButton("Stop Server", skin);
         stopButton.addListener(new ChangeListener() {
             @Override
@@ -106,8 +90,10 @@ public class LauncherWindow extends Window {
                 stopServer();
             }
         });
+
+        buttonTable.add(startButton).width(100).padRight(10);
         buttonTable.add(stopButton).width(100);
-        table.add(buttonTable).colspan(2).center();
+        table.add(buttonTable).colspan(2).left().growX();
         table.row();
 
         // Open Browser button
@@ -157,51 +143,51 @@ public class LauncherWindow extends Window {
     }
 
 
-    private void uploadJar() {
-        statusLabel.setText("Status: Opening file chooser...");
-        NativeFileChooserConfiguration conf = new NativeFileChooserConfiguration();
-        conf.directory = Gdx.files.absolute(System.getProperty("user.home"));
-        conf.title = "Choose JAR file";
-        conf.nameFilter = (dir, name) -> name.endsWith(".jar");
-
-        fileChooser.chooseFile(conf, new NativeFileChooserCallback() {
-            @Override
-            public void onFileChosen(FileHandle file) {
-                try {
-                    String fileName = file.file().getName();
-                    Path sourcePath = Paths.get(file.path());
-                    Path targetPath = Paths.get(fileName);
-                    Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
-                    Gdx.app.postRunnable(() -> {
-                        statusLabel.setText("Status: JAR file uploaded");
-                        appendToLog(
-                            "JAR file uploaded: " + file.name() + " at " + getCurrentTime());
-                    });
-                } catch (IOException e) {
-                    Gdx.app.postRunnable(() -> {
-                        statusLabel.setText("Status: Upload failed - " + e.getMessage());
-                        appendToLog("Upload failed: " + e.getMessage());
-                    });
-                }
-            }
-
-            @Override
-            public void onCancellation() {
-                Gdx.app.postRunnable(() -> {
-                    statusLabel.setText("Status: Upload cancelled");
-                    appendToLog("Upload cancelled at " + getCurrentTime());
-                });
-            }
-
-            @Override
-            public void onError(Exception exception) {
-                Gdx.app.postRunnable(() -> {
-                    statusLabel.setText("Status: Upload failed - " + exception.getMessage());
-                    appendToLog("Upload failed: " + exception.getMessage());
-                });
-            }
-        });
-    }
+//    private void uploadJar() {
+//        statusLabel.setText("Status: Opening file chooser...");
+//        NativeFileChooserConfiguration conf = new NativeFileChooserConfiguration();
+//        conf.directory = Gdx.files.absolute(System.getProperty("user.home"));
+//        conf.title = "Choose JAR file";
+//        conf.nameFilter = (dir, name) -> name.endsWith(".jar");
+//
+//        fileChooser.chooseFile(conf, new NativeFileChooserCallback() {
+//            @Override
+//            public void onFileChosen(FileHandle file) {
+//                try {
+//                    String fileName = file.file().getName();
+//                    Path sourcePath = Paths.get(file.path());
+//                    Path targetPath = Paths.get(fileName);
+//                    Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
+//                    Gdx.app.postRunnable(() -> {
+//                        statusLabel.setText("Status: JAR file uploaded");
+//                        appendToLog(
+//                            "JAR file uploaded: " + file.name() + " at " + getCurrentTime());
+//                    });
+//                } catch (IOException e) {
+//                    Gdx.app.postRunnable(() -> {
+//                        statusLabel.setText("Status: Upload failed - " + e.getMessage());
+//                        appendToLog("Upload failed: " + e.getMessage());
+//                    });
+//                }
+//            }
+//
+//            @Override
+//            public void onCancellation() {
+//                Gdx.app.postRunnable(() -> {
+//                    statusLabel.setText("Status: Upload cancelled");
+//                    appendToLog("Upload cancelled at " + getCurrentTime());
+//                });
+//            }
+//
+//            @Override
+//            public void onError(Exception exception) {
+//                Gdx.app.postRunnable(() -> {
+//                    statusLabel.setText("Status: Upload failed - " + exception.getMessage());
+//                    appendToLog("Upload failed: " + exception.getMessage());
+//                });
+//            }
+//        });
+//    }
 
     private void startServer() {
         if (serverProcess != null && serverProcess.isAlive()) {
