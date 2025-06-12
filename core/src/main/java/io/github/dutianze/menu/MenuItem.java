@@ -1,5 +1,6 @@
 package io.github.dutianze.menu;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
@@ -11,6 +12,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Cell;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 
 public class MenuItem extends Table {
@@ -24,6 +26,16 @@ public class MenuItem extends Table {
         Cell<Label> labelCell = this.add(label).left().expandX();
         if (LabelIcon.FILE.equals(icon) || LabelIcon.FOLDER.equals(icon)) {
             labelCell.padLeft(5);
+        }
+
+        if (LabelIcon.SHUTDOWN.equals(icon)) {
+            this.addListener(new ClickListener() {
+                @Override
+                public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
+                    Gdx.app.exit();
+                    return true;
+                }
+            });
         }
 
         float width = 140f;
