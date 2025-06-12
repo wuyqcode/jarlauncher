@@ -43,7 +43,7 @@ public class LauncherWindow extends Window {
 
         Image icon = new Image(jarItemDto.icon());
         icon.setScaling(Scaling.fit);
-        titleTable.add(icon).size(16, 16).padRight(5);
+        titleTable.add(icon).padRight(5);
 
         Label titleLabel = new Label(jarItemDto.name(), skin, "title");
         titleTable.add(titleLabel).padLeft(5).expandX().left();
