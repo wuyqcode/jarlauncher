@@ -5,14 +5,23 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.Scaling;
+import com.zaxxer.nuprocess.NuAbstractProcessHandler;
+import com.zaxxer.nuprocess.NuProcess;
+import com.zaxxer.nuprocess.NuProcessBuilder;
 import games.spooky.gdx.nativefilechooser.NativeFileChooser;
 import io.github.dutianze.jar.JarItemDto;
 import io.github.dutianze.jvm.JavaRuntime;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -29,7 +38,7 @@ public class LauncherWindow extends Window {
     private float originalY = (Gdx.graphics.getHeight() - height) / 2;
 
     private static final String LOG_PATH = "server.log";
-    private Process serverProcess;
+    private NuProcess serverProcess;
     private Program program;
 
     public LauncherWindow(Program program, Skin skin, NativeFileChooser fileChooser, JarItemDto jarItemDto) {
@@ -190,113 +199,108 @@ public class LauncherWindow extends Window {
 //    }
 
     private void startServer() {
-        if (serverProcess != null && serverProcess.isAlive()) {
+        if (serverProcess != null && serverProcess.isRunning()) {
             statusLabel.setText("Status: Server already running");
             return;
         }
 
-        try {
-            Path jarPath = Paths.get(program.getJarItemDto().jarPath());
-            if (!Files.exists(jarPath)) {
-                statusLabel.setText("Status: JAR file not found");
-                return;
-            }
-
-            String port = portField.getText();
-            if (!port.matches("\\d+")) {
-                statusLabel.setText("Status: Invalid port number");
-                return;
-            }
-
-            ProcessBuilder pb = new ProcessBuilder(JavaRuntime.getDefault().getBinary().toString(),
-                                                   "-jar", jarPath.toString(), "--server.port=" + port);
-            pb.directory(jarPath.getParent().toFile());
-            pb.redirectErrorStream(true);
-            File logFile = new File(LOG_PATH);
-            pb.redirectOutput(logFile);
-            serverProcess = pb.start();
-
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                serverProcess.destroy();
-            }));
-
-            AtomicBoolean statusFinalized = new AtomicBoolean(false);
-            AtomicInteger dotCounter = new AtomicInteger(1);
-            new Thread(() -> {
-                try (RandomAccessFile raf = new RandomAccessFile(LOG_PATH, "r")) {
-                    long filePointer = raf.length();
-
-                    while (serverProcess.isAlive()) {
-                        long fileLength = new File(LOG_PATH).length();
-                        if (fileLength > filePointer) {
-                            raf.seek(filePointer);
-                            String line;
-                            while ((line = raf.readLine()) != null) {
-                                if (!statusFinalized.get()) {
-                                    Gdx.app.postRunnable(() -> {
-                                        if (!statusFinalized.get()) {
-                                            int dots = dotCounter.getAndUpdate(
-                                                n -> n >= 6 ? 1 : n + 1);
-                                            String dotStr = ".".repeat(dots);
-                                            Gdx.app.postRunnable(() -> {
-                                                statusLabel.setText(
-                                                    "Status: Starting server on port " + port
-                                                    + dotStr);
-                                            });
-                                        }
-                                    });
-                                }
-
-                                boolean isExceptionLine =
-                                    line.startsWith("Exception in thread") ||
-                                    line.startsWith("Caused by:") ||
-                                    line.trim().startsWith("at ") ||
-                                    line.matches(".*\\.(Exception|Error):.*");
-                                if (line.contains("was already in use") || isExceptionLine) {
-                                    if (statusFinalized.compareAndSet(false, true)) {
-                                        Gdx.app.postRunnable(
-                                            () -> statusLabel.setText("Status: error"));
-                                    }
-                                }
-
-                                if (line.toLowerCase().contains("completed initialization")) {
-                                    if (statusFinalized.compareAndSet(false, true)) {
-                                        Gdx.app.postRunnable(
-                                            () -> statusLabel.setText(
-                                                "Status: Server started on port " + port));
-                                    }
-                                }
-                            }
-                            filePointer = raf.getFilePointer();
-                        }
-                        Thread.sleep(50);
-                    }
-                } catch (IOException | InterruptedException e) {
-                    Gdx.app.postRunnable(
-                        () -> statusLabel.setText("Status: Server error - " + e.getMessage()));
-                    appendToLog("Server error: " + e.getMessage());
-                }
-            }).start();
-
-            statusLabel.setText("Status: Starting server on port " + port + "...");
-            appendToLog("Starting server on port " + port + " at " + getCurrentTime());
-        } catch (IOException e) {
-            statusLabel.setText("Status: Failed to start server - " + e.getMessage());
-            appendToLog("Failed to start server: " + e.getMessage());
+        Path jarPath = Paths.get(program.getJarItemDto().jarPath());
+        if (!Files.exists(jarPath)) {
+            statusLabel.setText("Status: JAR file not found");
+            return;
         }
+
+        String port = portField.getText();
+        if (!port.matches("\\d+")) {
+            statusLabel.setText("Status: Invalid port number");
+            return;
+        }
+
+        File logFile = new File(LOG_PATH);
+        NuProcessBuilder pb = new NuProcessBuilder(JavaRuntime.getDefault().getBinary().toString(),
+                                                   "-jar", jarPath.toString(), "--server.port=" + port);
+        pb.setCwd(jarPath.getParent());
+        pb.setProcessListener(new NuAbstractProcessHandler() {
+
+            final AtomicBoolean statusFinalized = new AtomicBoolean(false);
+            final AtomicInteger dotCounter = new AtomicInteger(1);
+
+            @Override
+            public void onStdout(ByteBuffer buffer, boolean closed) {
+                this.writeToLog(buffer, closed);
+            }
+
+            @Override
+            public void onStderr(ByteBuffer buffer, boolean closed) {
+                this.writeToLog(buffer, closed);
+            }
+
+            private void writeToLog(ByteBuffer buffer, boolean closed) {
+                if (!closed) {
+                    byte[] bytes = new byte[buffer.remaining()];
+                    buffer.get(bytes);
+
+                    String content = new String(bytes, StandardCharsets.UTF_8);
+                    try {
+                        Files.writeString(
+                            logFile.toPath(),
+                            content,
+                            StandardOpenOption.CREATE,
+                            StandardOpenOption.APPEND
+                        );
+                    } catch (IOException e) {
+                        Gdx.app.error("LogWriter", "Failed to write log file", e);
+                    }
+
+                    String[] lines = content.split("\\R");
+                    for (String line : lines) {
+                        String trimmed = line.trim();
+                        if (!statusFinalized.get()) {
+                            int dots = dotCounter.getAndUpdate(n -> n >= 6 ? 1 : n + 1);
+                            String dotStr = ".".repeat(dots);
+                            Gdx.app.postRunnable(() -> {
+                                if (!statusFinalized.get()) {
+                                    statusLabel.setText("Status: Starting server on port " + port + dotStr);
+                                }
+                            });
+                        }
+
+                        boolean isExceptionLine =
+                            trimmed.startsWith("Exception in thread") ||
+                            trimmed.startsWith("Caused by:") ||
+                            trimmed.startsWith("at ") ||
+                            trimmed.matches(".*\\.(Exception|Error):.*");
+
+                        if (trimmed.contains("was already in use") || isExceptionLine) {
+                            if (statusFinalized.compareAndSet(false, true)) {
+                                Gdx.app.postRunnable(() -> statusLabel.setText("Status: error"));
+                            }
+                        }
+
+                        if (trimmed.toLowerCase().contains("completed initialization")) {
+                            if (statusFinalized.compareAndSet(false, true)) {
+                                Gdx.app.postRunnable(() -> statusLabel.setText(
+                                    "Status: Server started on port " + port));
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        serverProcess = pb.start();
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            serverProcess.destroy(true);
+        }));
+
+        statusLabel.setText("Status: Starting server on port " + port + "...");
+        appendToLog("Starting server on port " + port + " at " + getCurrentTime());
     }
 
     private void stopServer() {
-        if (serverProcess != null && serverProcess.isAlive()) {
-            serverProcess.destroy();
-            try {
-                serverProcess.waitFor();
-                statusLabel.setText("Status: Server stopped");
-                appendToLog("Server stopped at " + getCurrentTime());
-            } catch (InterruptedException e) {
-                statusLabel.setText("Status: Failed to stop server - " + e.getMessage());
-                appendToLog("Failed to stop server: " + e.getMessage());
-            }
+        if (serverProcess != null && serverProcess.isRunning()) {
+            serverProcess.destroy(true);
+            statusLabel.setText("Status: Server stopped");
+            appendToLog("Server stopped at " + getCurrentTime());
             serverProcess = null;
         } else {
             statusLabel.setText("Status: No server running");
