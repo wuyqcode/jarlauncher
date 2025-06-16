@@ -40,7 +40,7 @@ public class StartMenu extends Table {
         }
 
         float itemHeight = 32f + 2f;
-        float width = 140f + 2;
+        float width = 340f + 2;
         float height = items.size() * itemHeight;
 
         this.setWidth(width);

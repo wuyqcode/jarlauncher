@@ -9,6 +9,7 @@ import com.zaxxer.nuprocess.NuAbstractProcessHandler;
 import com.zaxxer.nuprocess.NuProcess;
 import com.zaxxer.nuprocess.NuProcessBuilder;
 import games.spooky.gdx.nativefilechooser.NativeFileChooser;
+import io.github.dutianze.Constant;
 import io.github.dutianze.jar.JarItemDto;
 import io.github.dutianze.jvm.JavaRuntime;
 
@@ -37,14 +38,15 @@ public class LauncherWindow extends Window {
     private float originalX = (Gdx.graphics.getWidth() - width) / 2;
     private float originalY = (Gdx.graphics.getHeight() - height) / 2;
 
-    private static final String LOG_PATH = "server.log";
     private NuProcess serverProcess;
     private Program program;
+    private File logFile;
 
     public LauncherWindow(Program program, Skin skin, NativeFileChooser fileChooser, JarItemDto jarItemDto) {
         super(jarItemDto.name(), skin);
         this.program = program;
         this.fileChooser = fileChooser;
+        logFile = Gdx.files.external(Paths.get(Constant.APP_ROOT, Constant.LOG_PATH).toString()).file();
 
         Table titleTable = getTitleTable();
         titleTable.clear();
@@ -216,7 +218,7 @@ public class LauncherWindow extends Window {
             return;
         }
 
-        File logFile = new File(LOG_PATH);
+
         NuProcessBuilder pb = new NuProcessBuilder(JavaRuntime.getDefault().getBinary().toString(),
                                                    "-jar", jarPath.toString(), "--server.port=" + port);
         pb.setCwd(jarPath.getParent());
@@ -329,7 +331,6 @@ public class LauncherWindow extends Window {
 
     private void openLogFile() {
         try {
-            File logFile = new File(LOG_PATH);
             if (!logFile.exists()) {
                 statusLabel.setText("Status: Log file not found");
                 appendToLog("Log file not found at " + getCurrentTime());
@@ -353,7 +354,7 @@ public class LauncherWindow extends Window {
     }
 
     private void appendToLog(String message) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(LOG_PATH, true))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(logFile, true))) {
             writer.write("[" + getCurrentTime() + "] " + message);
             writer.newLine();
         } catch (IOException e) {

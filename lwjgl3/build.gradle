@@ -149,6 +149,14 @@ construo {
         //useConsole.set(true)
       }
     }
+    jlink {
+      // add arbitrary modules to be included when running jlink
+      modules.addAll("jdk.unsupported")
+      // guess the modules from the jar using jdeps, defaults to true
+      guessModulesFromJar.set(false)
+      // include default crypto modules, defaults to true
+      includeDefaultCryptoModules.set(false)
+    }
 }
 
 // Equivalent to the jar task; here for compatibility with gdx-setup.

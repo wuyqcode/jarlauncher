@@ -53,7 +53,7 @@ public class Main extends ApplicationAdapter {
     @Override
     public void create() {
         skin = new Skin(Gdx.files.internal("expee-ui.json"));
-        this.jarPath = Gdx.files.local("jar");
+        this.jarPath = Gdx.files.external(Paths.get(Constant.APP_ROOT).toString());
         this.scanner = new JarScanner(jarPath);
         stage = new Stage(new ScreenViewport());
         Gdx.input.setInputProcessor(stage);
